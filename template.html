@@ -305,7 +305,7 @@ function makeIcon(num){
 function buildPopup(d){
   const t=getNetType(d.num),c=netColor(t),lbl=netLabel(t);
   const sk=statusKey(d.status);
-  const photo=photoStore[d.num];
+  const photo=getPhotoUrl(d.num);
   const imgHtml=photo
     ?`<div class="piw"><img src="${photo}"><button class="pid" onclick="delPhoto(${d.num})">✕</button></div><button class="pub" onclick="trigUpload(${d.num})">🔄 تغيير</button>`
     :`<div class="pip" onclick="trigUpload(${d.num})"><span>📷</span><p>اضغط لرفع صورة</p></div>`;
@@ -358,14 +358,67 @@ function delPhoto(num){
   if(m){const d=DATA.find(x=>x.num===num);m.setPopupContent(buildPopup(d));}
   updatePhotoCell(num);autoSave();
 }
+
+// ---- GitHub Photo Storage ----
+const GH_REPO = 'sam515no/tadiat-dashboard';
+const GH_BRANCH = 'main';
+let GH_TOKEN = localStorage.getItem('gh_token') || '';
+
+async function pushPhotoToGitHub(num, base64Data) {
+  if (!GH_TOKEN) {
+    GH_TOKEN = prompt('أدخل GitHub Token لرفع الصور:');
+    if (!GH_TOKEN) return null;
+    localStorage.setItem('gh_token', GH_TOKEN);
+  }
+  // Strip data URL prefix
+  const b64 = base64Data.split(',')[1];
+  const path = `photos/${num}.jpg`;
+  const url = `https://api.github.com/repos/${GH_REPO}/contents/${path}`;
+  
+  // Check if file exists (get SHA)
+  let sha = '';
+  try {
+    const check = await fetch(url, {headers: {'Authorization': `token ${GH_TOKEN}`, 'Accept': 'application/vnd.github.v3+json'}});
+    if (check.ok) { const j = await check.json(); sha = j.sha; }
+  } catch(e){}
+  
+  const body = {message: `صورة تعدي #${num}`, content: b64, branch: GH_BRANCH};
+  if (sha) body.sha = sha;
+  
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {'Authorization': `token ${GH_TOKEN}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json'},
+    body: JSON.stringify(body)
+  });
+  if (res.ok) {
+    return `https://raw.githubusercontent.com/${GH_REPO}/${GH_BRANCH}/${path}`;
+  }
+  console.error('GitHub upload failed', await res.text());
+  return null;
+}
+
+function getPhotoUrl(num) {
+  // Try GitHub first, fallback to local
+  if (photoStore[num] && photoStore[num].startsWith('https://')) return photoStore[num];
+  return photoStore[num] || null;
+}
+
 fileInput.addEventListener('change',()=>{
   const file=fileInput.files[0];if(!file||!pendingNum)return;
   const reader=new FileReader();
-  reader.onload=e=>{
-    photoStore[pendingNum]=e.target.result;
-    const m=markers.find(mk=>mk.dataNum===pendingNum);
-    if(m){const d=DATA.find(x=>x.num===pendingNum);m.setPopupContent(buildPopup(d));}
-    updatePhotoCell(pendingNum);autoSave();pendingNum=null;
+  reader.onload=async e=>{
+    const num=pendingNum; pendingNum=null;
+    const base64=e.target.result;
+    // Show uploading indicator
+    const btn=document.querySelector(`[onclick="trigUpload(${num})"]`);
+    if(btn){btn.textContent='⏳';btn.disabled=true;}
+    // Push to GitHub
+    const ghUrl = await pushPhotoToGitHub(num, base64);
+    photoStore[num] = ghUrl || base64; // fallback to local if GitHub fails
+    if(btn){btn.textContent='📷';btn.disabled=false;}
+    const m=markers.find(mk=>mk.dataNum===num);
+    if(m){const d=DATA.find(x=>x.num===num);m.setPopupContent(buildPopup(d));}
+    updatePhotoCell(num);autoSave();
   };
   reader.readAsDataURL(file);
 });
