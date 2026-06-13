@@ -507,6 +507,7 @@ function renderTable(data){
     const hasC=d.E&&d.N;
     const tdN=document.createElement('td');tdN.className='num';tdN.textContent=d.num;tr.appendChild(tdN);
     tr.appendChild(makeCell(d,'ref',{type:'text'},d=>`<span>${d.ref||'—'}</span>`));
+    tr.appendChild(makeCell(d,'branch',{type:'text'},d=>`<span style="font-size:11px;color:var(--accent2)">${d.branch||'—'}</span>`));
     tr.appendChild(makeCell(d,'desc',{type:'text'},d=>`<span title="${d.desc}">${d.desc||'—'}</span>`));
     tr.appendChild(makeCell(d,'date_obs',{type:'text'},d=>`<span>${d.date_obs||'—'}</span>`));
     tr.appendChild(makeCell(d,'neighborhood',{type:'select',opts:['ابرغ الرغامة','مريخ','الواحة']},d=>`<span style="color:${nbColors[d.neighborhood]||'#7BA7CC'}">${d.neighborhood||'—'}</span>`));
