@@ -249,7 +249,7 @@ function getNetType(num){
   const c=CLASSIFICATION[num]; return c?c.classification:'غير محدد';
 }
 function netColor(t){return t==='سطحي'?'#EF4444':t==='امطار'?'#3B82F6':t==='قناة'?'#F97316':'#94A3B8';}
-function netLabel(t){return t==='سطحي'?'💧 سطحية':t==='امطار'?'🌧️ أمطار':t==='قناة'?'🔶 قناة':'—';}
+function netLabel(t){return t==='سطحي'?'سطحية':t==='امطار'?'امطار':t==='قناة'?'قناة':'—';}
 function statusKey(s){return s==='قائم'?'s-قائم':s&&s.includes('اجراء')?'s-اجراء':s&&s.includes('رصد')?'s-رصد':'s-مزال';}
 
 // ---- MAP ----
