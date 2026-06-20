@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>v1781997896 لوحة رصد التعديات</title>
+<title>v1781998198 لوحة رصد التعديات</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -113,7 +113,7 @@ td.num{color:var(--muted);font-size:11px;text-align:center;width:32px;}
     <span id="saveInd">✓ حُفظ</span>
     <button id="loadImgsBtn" class="save-btn" style="background: linear-gradient(135deg, rgb(107, 63, 181), rgb(74, 44, 138)); opacity: 0.6;" onclick="loadExcelImages()">✅ الصور محملة</button>
     <button class="save-btn" onclick="saveAll()">💾 حفظ + Excel</button>
-    <button class="save-btn" id="shareBtn" onclick="saveAndShare()" style="background:linear-gradient(135deg,#14B8A6,#0D9488);box-shadow:0 0 12px rgba(20,184,166,0.4)">🔗 حفظ وشارك</button>
+    <button class="save-btn" id="shareBtn" onclick="saveAndShare()" style="background:linear-gradient(135deg,#14B8A6,#0D9488);box-shadow:0 0 12px rgba(20,184,166,0.4)">📥 تصدير HTML</button>
     <button class="save-btn" onclick="shareWhatsApp()" style="background:linear-gradient(135deg,#25D366,#128C7E);box-shadow:0 0 12px rgba(37,211,102,0.4)">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="white" style="vertical-align:middle;margin-left:4px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
       واتساب
@@ -641,48 +641,37 @@ async function shareWhatsApp(){
 
 async function saveAndShare(){
   const btn = document.getElementById('shareBtn');
-  btn.textContent = '⏳ جاري الرفع...';
+  btn.textContent = '⏳ جاري التصدير...';
   btn.disabled = true;
   try {
-    const token = getGhToken();
-    if(!token){ btn.textContent='🔗 حفظ وشارك'; btn.disabled=false; return; }
-
-    const editsPayload = JSON.stringify({userEdit, timestamp: new Date().toISOString()}, null, 2);
-    const b64 = btoa(unescape(encodeURIComponent(editsPayload)));
-    const url = `https://api.github.com/repos/${GH_REPO2}/contents/${EDITS_PATH}`;
-
-    // Get current SHA if file exists
-    let sha = '';
-    try {
-      const r = await fetch(url, {headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json'}});
-      if(r.ok){ const j=await r.json(); sha=j.sha; }
-    } catch(e){}
-
-    const body = {message:'تحديث التعديلات المشتركة', content:b64, branch:GH_BRANCH2};
-    if(sha) body.sha = sha;
-
-    const res = await fetch(url, {
-      method:'PUT',
-      headers:{'Authorization':`token ${token}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
-      body: JSON.stringify(body)
+    // دمج التعديلات في البيانات
+    const merged = DATA.map(d => {
+      const e = userEdit[d.num] || {};
+      const out = Object.assign({}, d);
+      if(e.net_type) out.type = e.net_type;
+      return out;
     });
-
-    if(res.ok){
-      btn.textContent = '✅ تم! شارك الرابط';
-      btn.style.background = 'linear-gradient(135deg,#10B981,#059669)';
-      setTimeout(()=>{ btn.textContent='🔗 حفظ وشارك'; btn.style.background='linear-gradient(135deg,#14B8A6,#0D9488)'; btn.disabled=false; }, 3000);
-    } else {
-      const err = await res.json();
-      console.error(err);
-      // Token might be expired - clear it
-      if(res.status===401){ localStorage.removeItem('gh_share_token'); }
-      btn.textContent='❌ خطأ - حاول ثانية'; btn.disabled=false;
-      setTimeout(()=>{ btn.textContent='🔗 حفظ وشارك'; },2000);
-    }
+    // جلب كود الصفحة وتحديث البيانات فيه
+    const res = await fetch(location.pathname + '?t=' + Date.now());
+    let src = await res.text();
+    const newData = 'const DATA = ' + JSON.stringify(merged) + ';';
+    src = src.replace(/const DATA = \[[\s\S]*?\];/, newData);
+    const ver = Date.now();
+    src = src.replace(/<title>[^<]*<\/title>/, '<title>v' + ver + ' لوحة رصد التعديات<\/title>');
+    // تنزيل الملف
+    const blob = new Blob([src], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'تعديات_محدثة.html';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    btn.textContent = '✅ تم! أرسل الملف للمشرف';
+    btn.style.background = 'linear-gradient(135deg,#10B981,#059669)';
+    setTimeout(()=>{ btn.textContent='📥 تصدير HTML'; btn.style.background='linear-gradient(135deg,#14B8A6,#0D9488)'; btn.disabled=false; }, 3500);
   } catch(e){
     console.error(e);
     btn.textContent='❌ خطأ'; btn.disabled=false;
-    setTimeout(()=>{ btn.textContent='🔗 حفظ وشارك'; btn.disabled=false; },2000);
+    setTimeout(()=>{ btn.textContent='📥 تصدير HTML'; btn.disabled=false; },2000);
   }
 }
 
