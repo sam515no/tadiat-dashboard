@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>v1781998340224 لوحة رصد التعديات</title>
+<title>v1781998733 لوحة رصد التعديات</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -644,16 +644,15 @@ async function saveAndShare(){
   btn.textContent = '⏳ جاري التصدير...';
   btn.disabled = true;
   try {
-    // دمج التعديلات في البيانات
+    // دمج جميع التعديلات من الذاكرة مباشرة
     const merged = DATA.map(d => {
       const e = userEdit[d.num] || {};
       const out = Object.assign({}, d);
       if(e.net_type) out.type = e.net_type;
       return out;
     });
-    // جلب كود الصفحة وتحديث البيانات فيه
-    const res = await fetch(location.pathname + '?t=' + Date.now());
-    let src = await res.text();
+    // استخدم محتوى الصفحة الحالي من الـDOM مباشرة
+    let src = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
     const newData = 'const DATA = ' + JSON.stringify(merged) + ';';
     src = src.replace(/const DATA = \[[\s\S]*?\];/, newData);
     const ver = Date.now();
