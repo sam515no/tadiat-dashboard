@@ -705,6 +705,10 @@ async function initImages(){
   } catch(e){}
 }
 
+// ── تحميل فوري للجدول والخريطة ──
+filteredData = [...DATA];
+renderTable(DATA);
+
 loadSavedData().then(()=>{
   initImages();
   renderLayers();
