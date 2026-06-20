@@ -633,8 +633,7 @@ function getGhToken(){
   return t;
 }
 
-async 
-function shareWhatsApp(){
+async function shareWhatsApp(){
   const url = 'https://sam515no.github.io/tadiat-dashboard';
   const msg = encodeURIComponent('لوحة رصد التعديات 🗺️\n' + url);
   window.open('https://wa.me/?text=' + msg, '_blank');

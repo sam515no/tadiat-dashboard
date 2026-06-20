@@ -4,8 +4,6 @@ on:
   push:
     paths:
       - 'data/*.xlsx'
-      - 'generate.py'
-      - 'template.html'
 
 permissions:
   contents: write
