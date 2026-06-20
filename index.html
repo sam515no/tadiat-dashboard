@@ -640,7 +640,7 @@ function shareWhatsApp(){
   window.open('https://wa.me/?text=' + msg, '_blank');
 }
 
-function saveAndShare(){
+async function saveAndShare(){
   const btn = document.getElementById('shareBtn');
   btn.textContent = '⏳ جاري الرفع...';
   btn.disabled = true;
