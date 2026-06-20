@@ -188,11 +188,22 @@ td.num{color:var(--muted);font-size:11px;text-align:center;width:32px;}
     <div class="tw">
       <table>
         <thead><tr>
-          <th style="text-align:center">#</th>
-          <th>رقم المعاملة</th><th>وصف التعدي</th><th>تاريخ الرصد</th>
-          <th>الحي</th><th>الشارع</th><th>الإحداثيات</th>
-          <th>نوع الشبكة</th><th>مصدر التعدي</th><th>عدد مرات الرصد</th><th>الحالة</th><th>الصورة</th>
-          <th>الموقع</th><th>البلدية</th><th></th>
+          <th style="text-align:center;width:35px">#</th>
+          <th style="width:110px">رقم المعاملة</th>
+          <th style="width:130px">اسم الفرعة</th>
+          <th style="min-width:160px">وصف التعدي</th>
+          <th style="width:95px">تاريخ الرصد</th>
+          <th style="width:100px">الحي</th>
+          <th style="width:120px">الشارع</th>
+          <th style="width:90px;text-align:center">الإحداثيات</th>
+          <th style="width:80px;text-align:center">نوع الشبكة</th>
+          <th style="width:80px">مصدر التعدي</th>
+          <th style="width:60px;text-align:center">مرات الرصد</th>
+          <th style="width:90px;text-align:center">الحالة</th>
+          <th style="width:50px;text-align:center">الصورة</th>
+          <th style="width:40px;text-align:center">الموقع</th>
+          <th style="width:80px">البلدية</th>
+          <th style="width:35px"></th>
         </tr></thead>
         <tbody id="tableBody"></tbody>
       </table>
@@ -469,36 +480,28 @@ function makeCell(d,field,cfg,renderFn){
   td.appendChild(mk());return td;
 }
 function makeCoordsCell(d){
-  const td=document.createElement('td');td.style.cssText='font-size:10px;white-space:nowrap;min-width:90px';
+  const td=document.createElement('td');
+  td.style.cssText='font-size:10px;white-space:nowrap;text-align:center;width:90px';
   const render=()=>{
     const span=document.createElement('span');span.className='ec';span.title='✏️';
-    span.style.cssText='display:block;color:var(--muted);line-height:1.6';
-    span.innerHTML=d.E&&d.N?`${d.E.toFixed(5)}<br>${d.N.toFixed(5)}`:'<span style="color:#475569">— أضف</span>';
+    span.style.cssText='color:var(--muted);font-size:10px';
+    span.innerHTML=d.E&&d.N
+      ?`<div style="line-height:1.5">E: ${d.E.toFixed(4)}<br>N: ${d.N.toFixed(4)}</div>`
+      :'<span style="color:#475569">—</span>';
     span.onclick=e=>{
       e.stopPropagation();td.innerHTML='';
-      const w=document.createElement('div');w.style.cssText='display:flex;flex-direction:column;gap:2px';
-      const iE=document.createElement('input'),iN=document.createElement('input');
-      [iE,iN].forEach((inp,i)=>{
-        inp.type='text';inp.placeholder=i===0?'E':'N';inp.value=i===0?(d.E||''):(d.N||'');
-        inp.style.cssText='background:#0B2D55;color:#E2EEF9;border:1px solid #0EA5E9;border-radius:4px;padding:2px 5px;font-size:10px;direction:ltr;outline:none;width:86px';
-      });
-      w.appendChild(iE);w.appendChild(iN);td.appendChild(w);iE.focus();
-      const sv=()=>{
-        const ne=parseFloat(iE.value),nn=parseFloat(iN.value);
-        if(!isNaN(ne))d.E=ne;if(!isNaN(nn))d.N=nn;
-        td.innerHTML='';td.appendChild(render());
-        const mk=markers.find(m=>m.dataNum===d.num);
-        if(mk&&d.E&&d.N){mk.setLatLng([d.N,d.E]);mk.setPopupContent(buildPopup(d));}
-        else if(d.E&&d.N)renderMarkers(curFilter);
-        autoSave();
-      };
-      iN.onblur=sv;
-      iE.onkeydown=e2=>{if(e2.key==='Tab'||e2.key==='Enter'){e2.preventDefault();iN.focus();}if(e2.key==='Escape'){td.innerHTML='';td.appendChild(render());}};
-      iN.onkeydown=e2=>{if(e2.key==='Enter'){e2.preventDefault();sv();}if(e2.key==='Escape'){td.innerHTML='';td.appendChild(render());}};
+      const wrap=document.createElement('div');wrap.style.cssText='display:flex;flex-direction:column;gap:2px';
+      const iE=document.createElement('input');iE.type='number';iE.step='0.00001';iE.value=d.E||'';iE.placeholder='E';
+      const iN=document.createElement('input');iN.type='number';iN.step='0.00001';iN.value=d.N||'';iN.placeholder='N';
+      [iE,iN].forEach(inp=>{inp.style.cssText='background:#0B2D55;color:#E2EEF9;border:1px solid #0EA5E9;border-radius:4px;padding:2px 5px;font-size:10px;width:85px';});
+      const sv=()=>{d.E=parseFloat(iE.value)||null;d.N=parseFloat(iN.value)||null;td.innerHTML='';td.appendChild(render());autoSave();};
+      iN.onblur=sv;iN.onkeydown=e2=>{if(e2.key==='Enter'){e2.preventDefault();sv();}};
+      wrap.appendChild(iE);wrap.appendChild(iN);td.appendChild(wrap);iE.focus();
     };
     return span;
   };
-  td.appendChild(render());return td;
+  td.appendChild(render());
+  return td;
 }
 
 let filteredData=[...DATA];
@@ -552,7 +555,7 @@ function renderTable(data){
   };
   td.appendChild(mk());tr.appendChild(td);
 })();
-    tr.appendChild(makeCell(d,'count',{type:'text'},d=>`<span style="text-align:center;display:block;font-weight:700;color:${d.count>1?'#F59E0B':'var(--text)'}">${d.count||1}</span>`));
+    tr.appendChild(makeCell(d,'count',{type:'text'},d=>`<span style="text-align:center;display:block;font-weight:700;font-size:13px;color:${(d.count||1)>1?'#F59E0B':'var(--muted)'}">${d.count||1}</span>`));
     tr.appendChild(makeCell(d,'status',{type:'select',opts:['قائم','مزال','تحت الاجراء','قائم أثناء الرصد']},d=>{
       return `<span class="sb ${statusKey(d.status)}">${d.status||'—'}</span>`;
     }));
