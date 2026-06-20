@@ -841,6 +841,7 @@ async function initImages(){
 }
 
 loadSavedData().then(()=>{
+  setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} }, 300);
   initImages();
   renderLayers();
   loadSharedEdits();
